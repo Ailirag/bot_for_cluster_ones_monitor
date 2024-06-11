@@ -52,7 +52,6 @@ class AllStates(StatesGroup):
 if not os.path.exists(path_to_settings):
     logging('settings.ini not find and will be created.')
     config_file['DEFAULT']['TOKEN'] = ''
-    config_file['DEFAULT']['admins_group'] = ''
     config_file['DEFAULT']['directory_for_exchange'] = ''
 
     with open(path_to_settings, 'w', encoding='utf8') as configfile:
@@ -63,7 +62,6 @@ if not os.path.exists(path_to_settings):
 else:
     config_file.read(path_to_settings, encoding='utf8')
     TOKEN = config_file['DEFAULT']['TOKEN']
-    admins_group = config_file['DEFAULT']['admins_group']
     directory_for_exchange = config_file['DEFAULT']['directory_for_exchange']
 
     if not TOKEN \
@@ -140,7 +138,6 @@ async def run_exchange():
 async def send_notifications(db):
     array_clear_alerts = list()
 
-    # if admins_group:
     notification_on_bases = await db.get_current_notifications()
 
     bases_without_sub = list()
@@ -613,6 +610,8 @@ async def echo(message: types.Message):
             if chat_without_reg_message:
                 return
             logging(f'Message from unauthorized user. chat_id: {message.chat.id}, name: {message.from_user.full_name} : @{message.from_user.username}. \nMessage: {message.text}')
+            # Прекращение активности регистрации через бота
+            return
             state = dp.current_state(user=message.from_user.id)
             # await state.set_state(AllStates.QUESTION_REG_STATE)
             await AllStates.QUESTION_REG_STATE.set()
@@ -629,7 +628,7 @@ async def echo(message: types.Message):
             else:
                 reply_message = message.reply_to_message.text
             base = re.findall("База {0,50}:([\а-яА-Яa-zA-Z0-9 \/ -_.]+)", reply_message)[0].strip()
-            user = re.findall("Пользователь {0,50}:([\а-яА-Яa-zA-Z0-9_ -.]+)", reply_message)[0].strip()
+            user = re.findall("Пользователь {0,50}:([\а-яА-Яa-zA-Z0-9_ -.ёЁ]+)", reply_message)[0].strip()
             number = re.findall("Номер сеанса {0,50}:([  \d]+)", reply_message)[0].strip()
 
             user_chat_admin = user_info['is_admin'] or await db.user_is_admin_of_chat_and_base(message.from_user.id, message.chat.id, base)
